@@ -53,24 +53,14 @@ sudo timedatectl set-timezone <Region/City>   # e.g. America/Chicago
 
 `poppler-utils` = `pdfinfo`, `pdftoppm`, `pdfimages`. Timezone matters: due-date math and log times use local time.
 
-### 2. Check the core utilities
-
-```bash
-TZ=America/New_York date -d "11/9/2026 11:25:19 PM UTC" '+%F %R'   # expect: 2026-11-09 18:25
-date -d "2026-11-16" +%u                       # expect: 1
-stat -c %Y /etc/hostname && readlink -f /bin/sh && echo ok
-```
-
-If anything errors or differs: `sudo apt install coreutils-from-gnu`
-
-### 3. rclone
+### 2. rclone
 
 ```bash
 sudo apt install -y rclone
 rclone version
 ```
 
-### 4. Install the code and work directory
+### 3. Install the code and work directory
 
 ```bash
 sudo install -d /opt/poster-queue
@@ -85,7 +75,7 @@ sudo install -d -o "$SVC_USER" -g "$SVC_USER" /var/lib/poster-queue
 Code is root-owned (the service user can run it, not change it). The work dir holds the log,
 lock, sent list and temp files, owned by the service user.
 
-### 5. Config
+### 4. Config
 
 ```bash
 sudo install -m 640 -o root -g "$SVC_USER" ~/poster-queue.conf.example /etc/poster-queue.conf
@@ -94,44 +84,25 @@ sudo nano /etc/poster-queue.conf
 
 Set `PRINTER=` to the Z6 IP. Leave `DRY_RUN=1` for now.
 
-### 6. rclone remote
+### 5. rclone remote
 
-Pasting the OneDrive token into a headless `rclone config` over SSH fails: the token is
-longer than the terminal's ~4095-character line limit and gets cut off ("unexpected end of
-JSON input"). Configure rclone on a workstation with a browser and copy the config file instead.
-
-On the workstation:
+As the service user on the VM, set up a OneDrive remote named `onedrive`
+(must match `REMOTE=` in `/etc/poster-queue.conf`), then check it:
 
 ```bash
 rclone config
-#  n → name: onedrive (must match REMOTE= in /etc/poster-queue.conf)
-#  storage: onedrive; client_id/secret blank; region: global; advanced: n
-#  web browser auth: y → sign in with your Microsoft 365 account
-#  type: OneDrive Personal or Business → pick the business drive → confirm → q
-rclone lsf onedrive:Posters
-scp "$(rclone config file | tail -1)" "$SVC_USER@$VM:/tmp/rclone.conf"
-rclone config delete onedrive      # only the VM should hold this token
-```
-
-On the VM:
-
-```bash
-mkdir -p ~/.config/rclone
-mv /tmp/rclone.conf ~/.config/rclone/rclone.conf
-chmod 600 ~/.config/rclone/rclone.conf
 rclone lsf onedrive:Posters        # should list incoming/
 ```
 
-If the token ever expires, re-authorize from the workstation the same way, or try
-`rclone config reconnect onedrive:` on the VM first.
+If the token ever expires: `rclone config reconnect onedrive:`
 
-### 7. Printer reachable?
+### 6. Printer reachable?
 
 ```bash
 nc -zv <z6-ip> 9100
 ```
 
-### 8. Dry run by hand
+### 7. Dry run by hand
 
 Submit a test form, wait for `N.pdf` + `N.json` in `incoming/`, then:
 
@@ -144,7 +115,7 @@ Check the new `review/` folder in OneDrive. Move it to `approved/`, run the scri
 With `DRY_RUN=1` it saves the print stream to `/var/lib/poster-queue/last-dryrun.prn`
 and moves the folder to `printed/` without printing.
 
-### 9. One real print, by hand
+### 8. One real print, by hand
 
 ```bash
 cat /var/lib/poster-queue/last-dryrun.prn > /dev/tcp/<z6-ip>/9100
@@ -155,7 +126,7 @@ defaults; fix them on the front panel if needed. Also set the printer to
 **Hold job and continue with next** so a mismatched job waits instead of stopping the queue.
 When it's right: set `DRY_RUN=0` in `/etc/poster-queue.conf`.
 
-### 10. Schedule it (systemd timer)
+### 9. Schedule it (systemd timer)
 
 ```bash
 sed "s/<service-user>/$SVC_USER/g" ~/poster-queue.service \
@@ -171,7 +142,7 @@ journalctl -u poster-queue.service -f         # live output
 
 Runs never overlap (`Type=oneshot` + the script's own lock).
 
-### 11. Log rotation
+### 10. Log rotation
 
 ```bash
 sudo tee /etc/logrotate.d/poster-queue >/dev/null <<EOF
@@ -186,7 +157,7 @@ sudo tee /etc/logrotate.d/poster-queue >/dev/null <<EOF
 EOF
 ```
 
-### 12. Optional: email alerts via an SMTP relay
+### 11. Optional: email alerts via an SMTP relay
 
 ```bash
 sudo apt install -y msmtp-mta bsd-mailx
@@ -213,11 +184,11 @@ are sent at most once per 6 h per issue.
 | Log | `/var/lib/poster-queue/poster-queue.log` and `journalctl -u poster-queue` |
 | Jobs already sent | `/var/lib/poster-queue/sent.list` |
 | Pause processing | `sudo systemctl stop poster-queue.timer` |
-| Update code | rerun the two `install` lines in step 4 (venv untouched) |
+| Update code | rerun the two `install` lines in step 3 (venv untouched) |
 
 ## Notes / limits
 
 - The PJL header + PDF over port 9100 is standard for HP PostScript/PDF printers, but prove
-  it with step 9 before trusting it.
+  it with step 8 before trusting it.
 - `sent.list` prevents a reprint if moving a job to `printed/` fails; the move is just retried.
 - If the form's size-option wording changes, update `size_mode()` in `posterfit.py`.

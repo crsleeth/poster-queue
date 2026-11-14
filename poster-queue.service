@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-# README step 10 replaces <service-user> during install
+# README step 9 replaces <service-user> during install
 User=<service-user>
 Group=<service-user>
 ExecStart=/opt/poster-queue/poster-queue.sh
