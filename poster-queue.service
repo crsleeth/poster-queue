@@ -1,0 +1,11 @@
+[Unit]
+Description=Poster queue: process print requests and print approved jobs
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# README step 10 replaces <service-user> during install
+User=<service-user>
+Group=<service-user>
+ExecStart=/opt/poster-queue/poster-queue.sh

@@ -1,0 +1,11 @@
+# /etc/poster-queue.conf - sourced by poster-queue.sh
+
+REMOTE="onedrive:Posters"          # rclone remote:path (remote name from `rclone config`)
+PRINTER="<printer-ip>"              # Z6 IP or hostname
+DRY_RUN=1                       # set to 0 once a test print looks right
+
+#ALERT_TO="you@example.edu"     # needs a working `mail` (mailutils) on this VM
+#ROLL_IN=36
+#PRINTABLE_IN=35.6              # 36 in roll minus ~5 mm margins each side
+#MIN_LEAD_DAYS=2
+#WORKDIR=/var/lib/poster-queue
