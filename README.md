@@ -1,7 +1,5 @@
 # poster-queue
 
-Status: setup docs and scripts complete; not yet deployed | Next: install on the VM and do a dry run (README steps 1–8)
-
 Microsoft Form → Power Automate → OneDrive `Posters/incoming/` → Linux VM → HP DesignJet Z6.
 
 | File | Purpose |
