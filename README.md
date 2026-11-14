@@ -23,7 +23,7 @@ as large as possible = short side 35.6 in. Prints with a short side under 18 in 
 A short side between 35.6 and 36 in is shrunk ~1% for printer margins.
 Output is always rotated so the short side runs across the roll.
 
-## Setup: fresh Ubuntu 26.04
+## Setup
 
 The job runs as an ordinary (non-root) account on the VM, called the service user below.
 Set these in every shell you use for setup, on your workstation and on the VM:
@@ -47,13 +47,13 @@ Everything below is run as that user; `sudo` only where shown.
 
 ```bash
 sudo apt update && sudo apt full-upgrade -y
-sudo apt install -y jq poppler-utils python3-venv curl unzip
+sudo apt install -y jq poppler-utils python3-venv
 sudo timedatectl set-timezone <Region/City>   # e.g. America/Chicago
 ```
 
 `poppler-utils` = `pdfinfo`, `pdftoppm`, `pdfimages`. Timezone matters: due-date math and log times use local time.
 
-### 2. Check the core utilities (26.04 ships the Rust rewrite of coreutils)
+### 2. Check the core utilities
 
 ```bash
 TZ=America/New_York date -d "11/9/2026 11:25:19 PM UTC" '+%F %R'   # expect: 2026-11-09 18:25
@@ -63,12 +63,10 @@ stat -c %Y /etc/hostname && readlink -f /bin/sh && echo ok
 
 If anything errors or differs: `sudo apt install coreutils-from-gnu`
 
-### 3. rclone (official build; the repo version lags)
+### 3. rclone
 
 ```bash
-curl -fsSL https://rclone.org/install.sh -o /tmp/rclone-install.sh
-less /tmp/rclone-install.sh        # skim before running as root
-sudo bash /tmp/rclone-install.sh
+sudo apt install -y rclone
 rclone version
 ```
 
